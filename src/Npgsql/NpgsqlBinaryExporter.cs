@@ -269,7 +269,7 @@ public sealed class NpgsqlBinaryExporter : ICancelable
                 await reader.StartReadAsync(info.BufferRequirement, cancellationToken).ConfigureAwait(false);
                 result = asObject
                     ? (T)await info.Converter.ReadAsObjectAsync(reader, cancellationToken).ConfigureAwait(false)
-                    : await info.GetConverter<T>().ReadAsync(reader, cancellationToken).ConfigureAwait(false);
+                    : await info.Converter.UnsafeDowncast<T>().ReadAsync(reader, cancellationToken).ConfigureAwait(false);
                 await reader.EndReadAsync().ConfigureAwait(false);
             }
             else
@@ -277,7 +277,7 @@ public sealed class NpgsqlBinaryExporter : ICancelable
                 reader.StartRead(info.BufferRequirement);
                 result = asObject
                     ? (T)info.Converter.ReadAsObject(reader)
-                    : info.GetConverter<T>().Read(reader);
+                    : info.Converter.UnsafeDowncast<T>().Read(reader);
                 reader.EndRead();
             }
 
