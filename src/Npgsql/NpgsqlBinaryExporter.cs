@@ -375,23 +375,23 @@ public sealed class NpgsqlBinaryExporter : ICancelable
 
     #region Utilities
 
-    bool IsInitializedAndAtStart => PgReader.Initialized && (PgReader.FieldSize is -1 || PgReader.FieldOffset is 0);
+    bool IsInitializedAndAtStart => PgReader.Initialized && (PgReader.FieldSize is -1 || PgReader.IsAtStart);
 
     ValueTask Commit(bool async)
     {
         if (async)
-            return PgReader.CommitAsync(resuming: false);
+            return PgReader.CommitAsync();
 
-        PgReader.Commit(resuming: false);
+        PgReader.Commit();
         return new();
     }
 
     async ValueTask<int> MoveNextColumn(bool async, bool resumableOp)
     {
         if (async)
-            await PgReader.CommitAsync(resuming: false).ConfigureAwait(false);
+            await PgReader.CommitAsync().ConfigureAwait(false);
         else
-            PgReader.Commit(resuming: false);
+            PgReader.Commit();
 
         if (_column + 1 == NumColumns)
             ThrowHelper.ThrowInvalidOperationException("No more columns left in the current row");
@@ -460,9 +460,9 @@ public sealed class NpgsqlBinaryExporter : ICancelable
                 using var registration = _connector.StartNestedCancellableOperation(attemptPgCancellation: false);
                 // Be sure to commit the reader.
                 if (async)
-                     await PgReader.CommitAsync(resuming: false).ConfigureAwait(false);
+                     await PgReader.CommitAsync().ConfigureAwait(false);
                 else
-                    PgReader.Commit(resuming: false);
+                    PgReader.Commit();
                 // Finish the current CopyData message
                 await _buf.Skip(async, checked((int)(_endOfMessagePos - _buf.CumulativeReadPosition))).ConfigureAwait(false);
                 // Read to the end
